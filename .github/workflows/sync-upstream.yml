@@ -12,6 +12,7 @@ on:
 
 permissions:
   contents: write
+  actions: write   # to switch off rea's own workflows in this fork
 
 concurrency:
   group: sync-upstream
@@ -36,3 +37,14 @@ jobs:
             exit 1
           }
           echo "$result"
+
+      - name: Keep rea's own workflows switched off in this fork
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          gh api "repos/$REPO/actions/workflows" --paginate \
+            --jq '.workflows[] | select(.state=="active" and (.path|endswith("/sync-upstream.yml")|not)) | .id' |
+          while read -r id; do
+            gh api -X PUT "repos/$REPO/actions/workflows/$id/disable" && echo "disabled workflow $id"
+          done
