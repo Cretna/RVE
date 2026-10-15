@@ -1,0 +1,38 @@
+name: Sync with upstream rea
+
+# Keeps this fork's main branch up to date with morluto/rea.
+# Needs a repository secret SYNC_TOKEN: a fine-grained token for this repo with
+# "Contents: Read and write" and "Workflows: Read and write" (rea often changes
+# its workflow files, and the default GITHUB_TOKEN may not push those).
+
+on:
+  schedule:
+    - cron: "17 3 * * *"   # daily, 03:17 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-upstream
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Merge upstream main into this fork
+        env:
+          GH_TOKEN: ${{ secrets.SYNC_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::error::Add the SYNC_TOKEN repository secret (see the comment at the top of this file)."
+            exit 1
+          fi
+          result=$(gh api -X POST "repos/$REPO/merge-upstream" -f branch=main 2>&1) || {
+            echo "::error::Sync failed: $result"
+            echo "If this is a merge conflict, sync by hand on GitHub (Sync fork button) or locally."
+            exit 1
+          }
+          echo "$result"
