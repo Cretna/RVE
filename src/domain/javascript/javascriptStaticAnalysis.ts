@@ -1,3 +1,4 @@
+import { uniqueSortedBy } from "../canonicalOrdering.js";
 import * as t from "@babel/types";
 import { RETURNED_REFERENCE_WIDENING_LIMITATION } from "./javascriptSemanticCoverage.js";
 import { collectElectronWrappedCallPaths } from "./electronWrappedCallPaths.js";
@@ -15,12 +16,12 @@ import { inspectElectronStaticNode } from "./electronStaticAnalysis.js";
 import { hasPossibleCommonJsDelegateWrite } from "./javascriptSemanticRequireOrigin.js";
 import { semanticResourceLimitReason } from "./javascriptSemanticResourceLimits.js";
 import { createStaticNodePathResolveQuery } from "./javascriptStaticPathIntrinsics.js";
+import { createSemanticExpressionShapeResolver } from "./javascriptSemanticExpressionShapes.js";
 import { finishElectronBrowserWindowsSteps } from "./electronStaticAnalysisBrowser.js";
 import {
   detectVendors,
   failedJavaScriptStaticAnalysis,
   registrationKey,
-  sortedUnique,
   stringValue,
 } from "./javascriptStaticAnalysisHelpers.js";
 import {
@@ -109,6 +110,7 @@ export function* analyzeParsedJavaScriptStaticSourceSteps(
     electronInvocationPath: electronIdentity.invocationPath,
     electronAppPathChangePossible: electronIdentity.mayChangeAppPath,
     rpcScan: createJavaScriptRpcScan(source, receivers.rpcClientRoots, index),
+    expressionShapes: createSemanticExpressionShapeResolver(bindings),
   };
   yield* traverseStaticSourceSteps(file, findings, bindings);
   yield* finishElectronBrowserWindowsSteps(findings, index);
@@ -218,7 +220,7 @@ const finalizeStaticAnalysis = (
       accumulator.storage,
       accumulator.moduleRangeIndex,
     ),
-    bundler_registrations: sortedUnique(
+    bundler_registrations: uniqueSortedBy(
       accumulator.registrations,
       registrationKey,
     ),

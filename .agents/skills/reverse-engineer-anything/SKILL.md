@@ -167,7 +167,9 @@ explicit path or endpoint and do not need it.
   ambiguity. No implicit fetch or target execution; WAT is not original source.
   See the [WASM guide](https://github.com/morluto/rea/blob/main/docs/wasm-artifacts.md).
 - Explicit local EVM bytecode carrier: `inspect_evm_interface` with caller-selected
-  `raw` or `hex` encoding. Preserve carrier/decoded digests and treat selectors,
+  `raw` or `hex` encoding. The owned worker deadline is `timeout_ms` (default
+  30000 ms, range 1..2147483647, next call). It does not raise the fixed byte,
+  address-space, or CPU allowances. Preserve carrier/decoded digests and treat selectors,
   argument strings and mutability as inferred candidates; this performs no chain
   lookup or target execution. For the complete inferred interface without hex or
   duplicate stdout, discover support and select `detail: "summary"`; complete
@@ -181,6 +183,8 @@ explicit path or endpoint and do not need it.
   absent metadata does not prove a binary is not Go, and unparsed text records
   remain explicit. See the
   [Go binary guide](https://github.com/morluto/rea/blob/main/docs/go-binaries.md).
+- Embedded CUDA/HIP code objects: `inspect_gpu_code_objects`; inventory targets
+  first, then decode selected payloads and query retained GPU Evidence.
 - Bundled GGUF or safetensors model declarations: `inspect_model_artifact`
   with the explicit local file. Default header hashing leaves full-file identity
   unknown; `hash: "full"` additionally reads all weights for SHA-256. MCP returns
@@ -215,6 +219,12 @@ explicit path or endpoint and do not need it.
   delivery requires `--evidence_output`.
   See the
   [Rust binary guide](https://github.com/morluto/rea/blob/main/docs/rust-binaries.md).
+- ELF note tables: `inspect_elf_notes` with the explicit local ELF32/ELF64
+  file. This built-in target-free inspection requires no disassembler. Preserve
+  PT_NOTE and SHT_NOTE ranges, owners, types, descriptor SHA-256, and GNU
+  build-id or ABI-tag fields. A missing table is observed absence of those
+  declarations, not proof the image never carried notes. See the
+  [ELF notes guide](https://github.com/morluto/rea/blob/main/docs/elf-notes.md).
 
 - Explicit local SQLite database snapshot: `inspect_sqlite_database`. Inspect
   with Node.js 24.x >=24.15 or 26+ providing native SQLite limits. Read schema
@@ -237,6 +247,8 @@ explicit path or endpoint and do not need it.
 - PE resource type/name/language trees and static icon group references:
   `inspect_pe_resources` with an explicit path. This portable operation requires
   no active target or engine; opaque payloads retain file ranges and SHA-256.
+- PE export directories and ELF dynamic-symbol exports: `inspect_native_exports`
+  with an explicit path; portable, no active target or engine.
 - Native executable, library, or analysis database: `open_binary`, then
   use focused analysis tools directly; call `binary_overview` when metadata or
   inventory context is useful and available from the selected provider.
