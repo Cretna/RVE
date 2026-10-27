@@ -1,11 +1,7 @@
-import { isAbsolute } from "node:path";
 import type { ExecutionOptions } from "../AnalysisProvider.js";
 import type { PeImportsPort } from "./PeImportsPort.js";
 import type { AnalysisError } from "../../domain/analysisErrorBase.js";
-import {
-  AnalysisInputError,
-  AnalysisOutputError,
-} from "../../domain/analysisErrorCore.js";
+import { AnalysisOutputError } from "../../domain/analysisErrorCore.js";
 import { createEvidence, type Evidence } from "../../domain/evidence.js";
 import {
   inspectPeImportsInputSchema,
@@ -14,10 +10,8 @@ import {
 } from "../../domain/native/peImports.js";
 import { peSubjectArchitecture } from "../../domain/peMachine.js";
 import { err, type Result } from "../../domain/result.js";
-import {
-  completeProviderEvidence,
-  parseProviderOperationInput,
-} from "../ProviderOperationExecution.js";
+import { completeProviderEvidence } from "../ProviderOperationExecution.js";
+import { parseAnalysisInput } from "../AnalysisInput.js";
 
 const OPERATION = "inspect_pe_imports";
 
@@ -33,23 +27,13 @@ export class PeImportsService {
     rawInput: unknown,
     options?: ExecutionOptions,
   ): Promise<Result<Evidence, AnalysisError>> {
-    const input = parseProviderOperationInput(
+    const input = parseAnalysisInput(
       OPERATION,
       rawInput,
       inspectPeImportsInputSchema,
       options?.signal,
     );
     if (!input.ok) return input;
-    if (!isAbsolute(input.value.path))
-      return err(
-        new AnalysisInputError(OPERATION, undefined, [
-          {
-            path: ["path"],
-            reason: "invalid_format",
-            message: "Expected an absolute filesystem path on this host.",
-          },
-        ]),
-      );
     const result = await this.provider.inspect(input.value, options);
     if (!result.ok) return result;
     const report = peImportsSchema.safeParse(result.value);
