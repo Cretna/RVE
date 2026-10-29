@@ -166,10 +166,13 @@ export const classifyAndHashRootForInventory = async (
       format === "mach-o-universal" ||
       format === "godot-pck" ||
       format === "unityfs" ||
+      format === "uimage" ||
       format === "pyinstaller" ||
       format === "node-sea" ||
       format === "intel-hex" ||
-      format === "srec";
+      format === "srec" ||
+      format === "esp-image" ||
+      format === "fit";
     outcome = {
       kind: "completed",
       value: {
