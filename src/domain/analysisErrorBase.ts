@@ -1,9 +1,12 @@
+import type { PartialTaskMeasurement } from "./desktop/taskDifficulty.js";
+import type { AppleIpsPartialObservation } from "./native/appleIps.js";
 import type { PlaywrightTrace } from "./playwrightTrace/playwrightTrace.js";
 import type { GraphqlContract } from "./apiContract/graphqlContract.js";
 import type { SavedAnalysisSnapshotPartialObservation } from "./savedAnalysisSnapshot.js";
 import type { AnalysisSettingLimit } from "./analysisSettings.js";
 import type { JsonValue } from "./jsonValue.js";
 import type { AnalysisCleanupRetry } from "./analysisErrorRecovery.js";
+import type { EnvironmentBundlePublication } from "./environmentBundleExport.js";
 
 /** Stable tags exposed by safe analysis-error projections. */
 const ANALYSIS_ERROR_TAGS = [
@@ -308,6 +311,19 @@ export abstract class AnalysisError extends Error {
     return this;
   }
 
+  /** Retain facts on every primary that cleanup settlement can reveal. */
+  retainPrimaryDiagnostics(
+    diagnostics: Readonly<Record<string, JsonValue>>,
+  ): this {
+    for (
+      let error: AnalysisError | undefined = this;
+      error !== undefined;
+      error = error.cleanupPrimary
+    )
+      error.retainDiagnostics(diagnostics);
+    return this;
+  }
+
   /** Diagnostics recorded for a caller with this lifetime. */
   diagnosticsFor(
     callerLifetime: AnalysisCallerLifetime,
@@ -473,6 +489,7 @@ import type { WebArtifactAcquisition } from "./webArtifactAcquisition.js";
 
 /** Provider-neutral evidence collected before a typed analysis failure. */
 export type AnalysisPartialObservation =
+  | PartialTaskMeasurement
   | {
       readonly kind: "omitted-observation";
       readonly reason:
@@ -511,10 +528,12 @@ export type AnalysisPartialObservation =
   | ArtifactInventoryPartialObservation
   | ArtifactExtractionPartialObservation
   | WebScriptExportPartialObservation
+  | EnvironmentBundlePublication
   | JavaScriptRecoveryPartialObservation
   | Evidence
   | BinaryLayout
   | RecordedCrash
+  | AppleIpsPartialObservation
   | RecordedCrashPartialObservation
   | AndroidPartialObservation
   | FirmwarePartialObservation
